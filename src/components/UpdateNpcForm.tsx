@@ -1,21 +1,42 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 import { Typography, TextField, Button, Card, CardContent, Box } from '@mui/material';
 
-const NPCForm: React.FC = () => {
-    const navigate = useNavigate();
+interface UpdateNPCFormProps {
+    npc: {
+        id: string;
+        appearance: string;
+        beliefs: string;
+        extras: string;
+        name: string;
+        secrets: string;
+    };
+}
 
-    const initialNpcState = {
-        appearance: '',
-        beliefs: '',
-        extras: '',
-        name: '',
-        secrets: '',
+type UpdatedFields = {
+    name?: string;
+    appearance?: string;
+    beliefs?: string;
+    extras?: string;
+    secrets?: string;
+};
+
+const UpdateNPCForm: React.FC<UpdateNPCFormProps> = ({ npc }) => {
+    const navigate = useNavigate();
+    const { npcId } = useParams();
+
+    const initialUpdatedFields: UpdatedFields = {
+        name: npc.name,
+        appearance: npc.appearance,
+        beliefs: npc.beliefs,
+        extras: npc.extras,
+        secrets: npc.secrets,
     };
 
-    const [npc, setNpc] = useState(initialNpcState);
-    const [formErrors, setFormErrors] = useState({
+    const [updatedFields, setUpdatedFields] = useState(initialUpdatedFields);
+
+    const [formErrors, setFormErrors] = useState<Partial<Record<keyof UpdatedFields, boolean>>>({
         appearance: false,
         beliefs: false,
         name: false,
@@ -24,16 +45,24 @@ const NPCForm: React.FC = () => {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setNpc({ ...npc, [name]: value });
-        setFormErrors({ ...formErrors, [name]: false });
+
+        setUpdatedFields((prevFields) => ({
+            ...prevFields,
+            [name]: value,
+        }));
+
+        setFormErrors((prevErrors) => ({
+            ...prevErrors,
+            [name]: false,
+        }));
     };
 
     const handleSubmit = () => {
-        const requiredFields = ['appearance', 'beliefs', 'name', 'secrets'];
-        const errors: any = {};
+        const requiredFields: (keyof UpdatedFields)[] = ['appearance', 'beliefs', 'name', 'secrets'];
+        const errors: Partial<Record<keyof UpdatedFields, boolean>> = {};
 
         requiredFields.forEach((field) => {
-            if (!npc[field as keyof typeof npc]) {
+            if (!updatedFields[field]) {
                 errors[field] = true;
             }
         });
@@ -42,25 +71,24 @@ const NPCForm: React.FC = () => {
             setFormErrors(errors);
         } else {
             api
-                .post('/add-npc', npc)
+                .patch(`/update-npc/${npcId}`, updatedFields)
                 .then((response) => {
-                    console.log('NPC added successfully:', response.data);
-                    // Redirect to the list of NPCs
+                    console.log('NPC updated successfully:', response.data);
                     navigate('/');
                 })
                 .catch((error) => {
-                    console.error('Error adding NPC:', error);
+                    console.error('Error updating NPC:', error);
                 });
         }
     };
 
     const handleCancel = () => {
         navigate('/');
-    };
+    }
 
     return (
         <div className="form-container">
-            <Typography variant="h4" gutterBottom>Add NPC</Typography>
+            <Typography variant="h4" gutterBottom>Update NPC</Typography>
             <Card variant="outlined">
                 <CardContent>
                     <Box sx={{ marginBottom: 2 }}>
@@ -69,7 +97,7 @@ const NPCForm: React.FC = () => {
                             label="Name"
                             variant="outlined"
                             fullWidth
-                            value={npc.name}
+                            value={updatedFields.name || ''}
                             onChange={handleInputChange}
                             error={formErrors.name}
                             helperText={formErrors.name ? 'Name is required.' : ''}
@@ -82,14 +110,10 @@ const NPCForm: React.FC = () => {
                             label="Appearance"
                             variant="outlined"
                             fullWidth
-                            value={npc.appearance}
+                            value={updatedFields.appearance || ''}
                             onChange={handleInputChange}
                             error={formErrors.appearance}
-                            helperText={
-                                formErrors.appearance
-                                    ? 'Appearance is required.'
-                                    : ''
-                            }
+                            helperText={formErrors.appearance ? 'Appearance is required.' : ''}
                         />
                     </Box>
 
@@ -99,12 +123,10 @@ const NPCForm: React.FC = () => {
                             label="Beliefs"
                             variant="outlined"
                             fullWidth
-                            value={npc.beliefs}
+                            value={updatedFields.beliefs || ''}
                             onChange={handleInputChange}
                             error={formErrors.beliefs}
-                            helperText={
-                                formErrors.beliefs ? 'Beliefs is required.' : ''
-                            }
+                            helperText={formErrors.beliefs ? 'Beliefs is required.' : ''}
                         />
                     </Box>
 
@@ -114,12 +136,10 @@ const NPCForm: React.FC = () => {
                             label="Secrets"
                             variant="outlined"
                             fullWidth
-                            value={npc.secrets}
+                            value={updatedFields.secrets || ''}
                             onChange={handleInputChange}
                             error={formErrors.secrets}
-                            helperText={
-                                formErrors.secrets ? 'Secrets is required.' : ''
-                            }
+                            helperText={formErrors.secrets ? 'Secrets is required.' : ''}
                         />
                     </Box>
 
@@ -129,7 +149,7 @@ const NPCForm: React.FC = () => {
                             label="Extras"
                             variant="outlined"
                             fullWidth
-                            value={npc.extras}
+                            value={updatedFields.extras || ''}
                             onChange={handleInputChange}
                         />
                     </Box>
@@ -139,7 +159,7 @@ const NPCForm: React.FC = () => {
                         color="primary"
                         onClick={handleSubmit}
                     >
-                        Add NPC
+                        Update NPC
                     </Button>
                     <Button
                         variant="contained"
@@ -154,4 +174,4 @@ const NPCForm: React.FC = () => {
     );
 };
 
-export default NPCForm;
+export default UpdateNPCForm;

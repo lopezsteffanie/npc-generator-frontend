@@ -9,6 +9,7 @@ const NpcList: React.FC = () => {
     const [npcs, setNpcs] = useState<any[]>([]);
     const [selectedNpc, setSelectedNpc] = useState<any>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [editedNpc, setEditedNpc] = useState<any>(null);
 
     const navigate = useNavigate();
 
@@ -27,6 +28,11 @@ const NpcList: React.FC = () => {
         setSelectedNpc(npc);
         setDeleteDialogOpen(true);
     };
+
+    const handleUpdateClick = (npc: any) => {
+        setEditedNpc(npc);
+        navigate(`/update/${npc.id}`, { state: { npc } });
+    }
 
     const handleDeleteConfirmed = () => {
         if (selectedNpc) {
@@ -63,7 +69,7 @@ const NpcList: React.FC = () => {
         <div className="npc-grid">
             {npcs.map((npc) => (
                     <div key={npc.id} className="npc-card">
-                        <NpcDisplay npc={npc} onDeleteClick={handleDeleteClick}/>
+                        <NpcDisplay npc={npc} onDeleteClick={handleDeleteClick} onUpdateClick={handleUpdateClick} />
                     </div>
             ))}
         </div>
